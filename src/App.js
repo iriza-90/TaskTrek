@@ -9,11 +9,13 @@ import Footer from './components/Footer';
 import LoginPage from './auth/login';
 import SignUpPage from './auth/signup';
 import ToDoDashboard from './components/TodoDashboard'; 
+import Profile from './components/Profile';
 
 // Landing Page Component
 function LandingPage() {
   return (
     <div>
+      <Navbar />
       {/* Hero Section */}
       <HeroSection />
 
@@ -40,7 +42,7 @@ function App() {
     <Router>
       <div className="bg-gradient-to-r from-[#edf6ff] via-white to-[#f6f3ff] min-h-screen">
         {/* Navbar visible on all pages */}
-        <Navbar />
+        
 
         {/* Define Routes */}
         <Routes>
@@ -54,6 +56,9 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
 
           <Route path="/TodoDashboard" element={user ? <ToDoDashboard /> : <LoginPage />} />
+
+          <Route path="/" element={<ToDoDashboard />} /> {/* Main ToDo Dashboard */}
+          <Route path="/profile" element={<Profile />} /> {/* Profile Page */}
         </Routes>
       </div>
     </Router>

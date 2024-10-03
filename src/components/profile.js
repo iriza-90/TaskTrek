@@ -25,7 +25,8 @@ const Profile = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-gray-100 to-blue-50 min-h-screen p-8 font-sans">
+    <section id="profile">
+    <div  className="bg-gradient-to-r from-gray-100 to-blue-50 min-h-screen p-8 font-sans">
       <h1 className="text-5xl font-bold text-gray-800 mb-8">Profile</h1>
       <div className="bg-white p-6 rounded-lg shadow-md">
         {editMode ? (
@@ -69,6 +70,7 @@ const Profile = () => {
         )}
       </div>
     </div>
+    </section>
   );
 };
 

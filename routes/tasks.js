@@ -1,7 +1,5 @@
-// routes/tasks.js
-
 const express = require('express');
-const Task = require('../models/Task');
+const Task = require('../models/tasks');
 const router = express.Router();
 
 // Get all tasks
@@ -28,12 +26,13 @@ router.get('/:id', async (req, res) => {
 
 // Create a new task
 router.post('/', async (req, res) => {
-  const { text, status } = req.body;
+  const { text, status, dueDate } = req.body; // Added dueDate to the destructured properties
 
   const task = new Task({
     text,
     status: status || 'To Do',
-    subtasks: []
+    subtasks: [],
+    dueDate: dueDate ? new Date(dueDate) : null // Convert due date string to Date
   });
 
   try {
@@ -46,14 +45,16 @@ router.post('/', async (req, res) => {
 
 // Update an existing task
 router.put('/:id', async (req, res) => {
+  const { text, status, dueDate } = req.body; // Added dueDate to the destructured properties
+
   try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: 'Task not found' });
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id,
+      { text, status, dueDate: dueDate ? new Date(dueDate) : null }, // Update the due date as well
+      { new: true, runValidators: true } // `new: true` returns the updated task
+    );
+    if (!updatedTask) return res.status(404).json({ message: 'Task not found' });
 
-    task.text = req.body.text || task.text;
-    task.status = req.body.status || task.status;
-
-    const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -63,11 +64,10 @@ router.put('/:id', async (req, res) => {
 // Delete a task
 router.delete('/:id', async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: 'Task not found' });
+    const deletedTask = await Task.findByIdAndDelete(req.params.id);
+    if (!deletedTask) return res.status(404).json({ message: 'Task not found' });
 
-    await task.remove();
-    res.json({ message: 'Task deleted' });
+    res.json({ message: 'Task successfully deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -75,11 +75,13 @@ router.delete('/:id', async (req, res) => {
 
 // Add a subtask to an existing task
 router.post('/:id/subtasks', async (req, res) => {
+  const { text } = req.body;
+
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    const subtask = { text: req.body.text, completed: false };
+    const subtask = { text, completed: false };
     task.subtasks.push(subtask);
 
     const updatedTask = await task.save();
@@ -91,6 +93,8 @@ router.post('/:id/subtasks', async (req, res) => {
 
 // Update a specific subtask within a task
 router.put('/:taskId/subtasks/:subtaskId', async (req, res) => {
+  const { text, completed } = req.body;
+
   try {
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: 'Task not found' });
@@ -98,8 +102,9 @@ router.put('/:taskId/subtasks/:subtaskId', async (req, res) => {
     const subtask = task.subtasks.id(req.params.subtaskId);
     if (!subtask) return res.status(404).json({ message: 'Subtask not found' });
 
-    subtask.text = req.body.text || subtask.text;
-    subtask.completed = req.body.completed !== undefined ? req.body.completed : subtask.completed;
+    // Update subtask fields
+    if (text) subtask.text = text;
+    if (completed !== undefined) subtask.completed = completed;
 
     const updatedTask = await task.save();
     res.json(updatedTask);
@@ -108,6 +113,7 @@ router.put('/:taskId/subtasks/:subtaskId', async (req, res) => {
   }
 });
 
+// Delete a subtask
 router.delete('/:taskId/subtasks/:subtaskId', async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
@@ -117,11 +123,12 @@ router.delete('/:taskId/subtasks/:subtaskId', async (req, res) => {
     if (!subtask) return res.status(404).json({ message: 'Subtask not found' });
 
     subtask.remove();
-    await task.save(); 
-    res.json(task); 
+    const updatedTask = await task.save();
+
+    res.json(updatedTask);  
   } catch (err) {
-    console.error('Delete Error:', err); 
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
+
 module.exports = router;
